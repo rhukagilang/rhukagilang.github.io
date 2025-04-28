@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker Tensi Darah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+
+        .image-preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .image-preview {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            height: 120px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+
+        .image-preview:hover img {
+            transform: scale(1.05);
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background-color: rgba(239, 68, 68, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        .add-image-btn {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            height: 120px;
+            background-color: #f9fafb;
+            transition: all 0.2s;
+        }
+
+        .add-image-btn:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .dropzone {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            background-color: #f9fafb;
+            transition: all 0.2s;
+        }
+
+        .dropzone.active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .filter-container {
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .date-range-input {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .date-range-input input {
+            flex: 1;
+            max-width: 150px;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
+
+        .apply-filter-btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .apply-filter-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background-color: #e2e8f0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            border: 1px dashed #cbd5e0;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #cbd5e0;
+            margin-bottom: 1rem;
+        }
+
+        .edit-modal-content {
+            background-color: white;
+            border-radius: 0.5rem;
+            width: 100%;
+            max-width: 600px;
+            margin: 2rem auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 4rem);
+        }
+
+        .edit-modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #9ca3af;
+        }
+
+        .btn-primary:disabled {
+            background-color: #9ca3af;
+        }
+
+        /* New styles for blood pressure tracker */
+        .bp-input-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bp-input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .bp-separator {
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+
+        .stats-container {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 10;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .bp-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bp-table th {
+            background-color: #f1f5f9;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .bp-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .bp-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .bp-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .bp-normal {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .bp-prehypertension {
+            background-color: #fef9c3;
+            color: #854d0e;
+        }
+
+        .bp-hypertension1 {
+            background-color: #fed7aa;
+            color: #9a3412;
+        }
+
+        .bp-hypertension2 {
+            background-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        .bp-hypertension3 {
+            background-color: #f87171;
+            color: #991b1b;
+            font-weight: 600;
+        }
+
+        .bp-crisis {
+            background-color: #ef4444;
+            color: white;
+            font-weight: 600;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .filter-date-range {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .view-image-btn {
+            color: #3b82f6;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="mb-10 relative">
+            <div
+                class="absolute -top-4 -left-4 w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg opacity-20">
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 relative">Tracker Tensi Darah</h1>
+            <p class="text-gray-600 mt-2 font-medium">Tes Satu Dua Tiga</p>
+            <div class="h-1 w-20 bg-indigo-600 mt-4"></div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-gray-200 mb-8">
+            <button id="add-tab"
+                class="py-3 px-6 font-medium text-gray-500 hover:text-blue-500 focus:outline-none tab-active">
+                <i class="fas fa-plus-circle mr-2"></i>Tambah Data
+            </button>
+            <button id="history-tab" class="py-3 px-6 font-medium text-gray-500 hover:text-blue-500 focus:outline-none">
+                <i class="fas fa-history mr-2"></i>Histori Data
+            </button>
+        </div>
+
+        <!-- Add Data Form -->
+        <div id="add-activity-section" class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">Tambah Data Tensid Baru</h2>
+
+            <form id="activity-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                        <input type="date" id="date"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="time" class="block text-sm font-medium text-gray-700 mb-1">Waktu (GMT+7)</label>
+                        <input type="time" id="time"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tekanan Darah (mmHg)</label>
+                    <div class="bp-input-container">
+                        <input type="number" id="sistolik" required min="40" max="300"
+                            class="bp-input px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Sistolik">
+                        <span class="bp-separator">/</span>
+                        <input type="number" id="diastolik" required min="20" max="200"
+                            class="bp-input px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Diastolik">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="activity-desc" class="block text-sm font-medium text-gray-700 mb-1">Keterangan
+                        (Opsional)</label>
+                    <textarea id="activity-desc" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Tambahkan catatan..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gambar (Opsional)</label>
+                    <div id="dropzone" class="dropzone">
+                        <div class="space-y-2">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                            <p class="text-sm text-gray-500">Drag & drop gambar di sini atau klik untuk memilih</p>
+                            <p class="text-xs text-gray-400">Anda dapat mengupload beberapa gambar sekaligus</p>
+                        </div>
+                        <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+                    </div>
+
+                    <div id="image-preview-container" class="image-preview-container mt-4">
+                        <div id="add-image-btn" class="add-image-btn">
+                            <i class="fas fa-plus text-gray-400 mb-2"></i>
+                            <span class="text-xs text-gray-500">Tambah Gambar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" id="save-btn" class="w-full btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>Simpan Data
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- History Section -->
+        <div id="history-section" class="hidden bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Histori Cek Tensid</h2>
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <select id="filter-select"
+                            class="appearance-none bg-white border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">Semua Data</option>
+                            <option value="today">Hari Ini</option>
+                            <option value="week">Minggu Ini</option>
+                            <option value="month">Bulan Ini</option>
+                            <option value="custom">Rentang Tanggal</option>
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <button id="reset-filter-btn" class="btn-icon text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date Range Filter (Hidden by default) -->
+            <div id="date-range-filter" class="filter-container hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label for="start-date" class="block text-sm font-medium text-gray-700 mb-1">Dari
+                            Tanggal</label>
+                        <input type="date" id="start-date" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="end-date" class="block text-sm font-medium text-gray-700 mb-1">Hingga
+                            Tanggal</label>
+                        <input type="date" id="end-date" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <button id="apply-date-range-btn" class="btn btn-primary w-full">
+                            <i class="fas fa-filter mr-2"></i>Terapkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div id="stats-container" class="stats-container hidden">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-bp">-</div>
+                        <div class="stat-label">Rata-rata</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="min-bp">-</div>
+                        <div class="stat-label">Terendah</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="max-bp">-</div>
+                        <div class="stat-label">Tertinggi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="status-count">-</div>
+                        <div class="stat-label">Status Terbanyak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-records">-</div>
+                        <div class="stat-label">Total Pencatatan</div>
+                    </div>
+                </div>
+                <div id="filter-date-range" class="filter-date-range"></div>
+            </div>
+
+            <div id="loading-history" class="flex justify-center items-center py-12">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <div class="table-container">
+                <table id="bp-table" class="bp-table w-full">
+                    <thead>
+                        <tr>
+                            <th>Tanggal & Waktu</th>
+                            <th>Tekanan Darah</th>
+                            <th>Status</th>
+                            <th>Keterangan</th>
+                            <th>Gambar</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activities-container">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="no-activities" class="empty-state hidden">
+                <div class="empty-state-icon">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-500">Tidak ada data yang ditemukan</h3>
+                <p class="text-gray-400">Mulai tambahkan data tensi darah Anda</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="modal-overlay hidden">
+        <div class="modal-content relative">
+            <button id="close-modal" class="absolute -top-10 right-0 text-white hover:text-gray-300 focus:outline-none">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            <img id="modal-image" src="" alt="Preview">
+        </div>
+    </div>
+
+    <!-- Edit Activity Modal -->
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="edit-modal-content">
+            <div class="flex justify-between items-center border-b border-gray-200 p-4">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Data Tensid</h3>
+                <button id="close-edit-modal" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="edit-modal-body">
+                <form id="edit-form" class="space-y-4">
+                    <input type="hidden" id="edit-id">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="edit-date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                            <input type="date" id="edit-date"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="edit-time" class="block text-sm font-medium text-gray-700 mb-1">Waktu
+                                (GMT+7)</label>
+                            <input type="time" id="edit-time"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tekanan Darah (mmHg)</label>
+                        <div class="bp-input-container">
+                            <input type="number" id="edit-sistolik" required min="40" max="300"
+                                class="bp-input px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Sistolik">
+                            <span class="bp-separator">/</span>
+                            <input type="number" id="edit-diastolik" required min="20" max="200"
+                                class="bp-input px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Diastolik">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="edit-desc" class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+                        <textarea id="edit-desc" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gambar</label>
+                        <div id="edit-dropzone" class="dropzone">
+                            <div class="space-y-2">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                <p class="text-sm text-gray-500">Drag & drop gambar di sini atau klik untuk memilih</p>
+                            </div>
+                            <input type="file" id="edit-file-input" multiple accept="image/*" class="hidden">
+                        </div>
+
+                        <div id="edit-image-preview-container" class="image-preview-container mt-4">
+                            <!-- Existing images will be shown here -->
+                            <div id="edit-add-image-btn" class="add-image-btn">
+                                <i class="fas fa-plus text-gray-400 mb-2"></i>
+                                <span class="text-xs text-gray-500">Tambah Gambar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-between">
+                        <button type="button" id="delete-btn" class="btn btn-danger">
+                            <i class="fas fa-trash mr-2"></i>Hapus
+                        </button>
+                        <button type="submit" id="update-btn" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i>Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let uploadInProgress = false;
+            const saveBtn = document.getElementById('save-btn');
+            const updateBtn = document.getElementById('update-btn');
+            const addImageBtn = document.getElementById('add-image-btn');
+            const editAddImageBtn = document.getElementById('edit-add-image-btn');
+
+            function updateSaveButtonState() {
+                saveBtn.disabled = uploadInProgress;
+                updateBtn.disabled = uploadInProgress;
+            }
+
+            // Set current date and time (GMT+7)
+            function getCurrentDateTimeGMT7() {
+                const now = new Date();
+                // Convert to GMT+7
+                const offset = 7 * 60; // GMT+7 in minutes
+                now.setMinutes(now.getMinutes() + now.getTimezoneOffset() + offset);
+
+                const currentDate = now.toISOString().split('T')[0];
+                const currentTime = now.getHours().toString().padStart(2, '0') + ':' +
+                    now.getMinutes().toString().padStart(2, '0');
+
+                return { currentDate, currentTime };
+            }
+
+            const { currentDate, currentTime } = getCurrentDateTimeGMT7();
+            document.getElementById('date').value = currentDate;
+            document.getElementById('time').value = currentTime;
+
+            // Tab navigation
+            const addTab = document.getElementById('add-tab');
+            const historyTab = document.getElementById('history-tab');
+            const addSection = document.getElementById('add-activity-section');
+            const historySection = document.getElementById('history-section');
+
+            addTab.addEventListener('click', function () {
+                addSection.classList.remove('hidden');
+                historySection.classList.add('hidden');
+                addTab.classList.add('tab-active');
+                historyTab.classList.remove('tab-active');
+            });
+
+            historyTab.addEventListener('click', function () {
+                addSection.classList.add('hidden');
+                historySection.classList.remove('hidden');
+                addTab.classList.remove('tab-active');
+                historyTab.classList.add('tab-active');
+                loadActivities();
+            });
+
+            // Image upload functionality
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+            const imagePreviewContainer = document.getElementById('image-preview-container');
+            const editDropzone = document.getElementById('edit-dropzone');
+            const editFileInput = document.getElementById('edit-file-input');
+            const editImagePreviewContainer = document.getElementById('edit-image-preview-container');
+
+            let uploadedImages = [];
+            let editUploadedImages = [];
+
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, preventDefaults, false);
+                editDropzone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, highlight, false);
+                editDropzone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, unhighlight, false);
+                editDropzone.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) {
+                e.currentTarget.classList.add('active');
+            }
+
+            function unhighlight(e) {
+                e.currentTarget.classList.remove('active');
+            }
+
+            // Handle file drop
+            dropzone.addEventListener('drop', handleDrop, false);
+            editDropzone.addEventListener('drop', handleEditDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            function handleEditDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleEditFiles(files);
+            }
+
+            // Handle file selection via button
+            addImageBtn.addEventListener('click', function () {
+                fileInput.click();
+            });
+
+            editAddImageBtn.addEventListener('click', function () {
+                editFileInput.click();
+            });
+
+            fileInput.addEventListener('change', function () {
+                handleFiles(this.files);
+                this.value = ''; // Reset input to allow selecting same file again
+            });
+
+            editFileInput.addEventListener('change', function () {
+                handleEditFiles(this.files);
+                this.value = ''; // Reset input to allow selecting same file again
+            });
+
+            // Process uploaded files
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    uploadInProgress = true;
+                    updateSaveButtonState();
+
+                    // Clear existing previews if we want to replace all
+                    // Or keep existing to allow multiple uploads
+
+                    // Process each file
+                    [...files].forEach(uploadFile);
+                }
+            }
+
+            function handleEditFiles(files) {
+                if (files.length > 0) {
+                    uploadInProgress = true;
+                    updateSaveButtonState();
+
+                    // Process each file
+                    [...files].forEach(uploadEditFile);
+                }
+            }
+
+            function uploadFile(file) {
+                if (!file.type.match('image.*')) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imageId = 'img-' + Date.now();
+                    const preview = createImagePreview(e.target.result, imageId);
+
+                    // Add to preview container before the add button
+                    imagePreviewContainer.insertBefore(preview, addImageBtn);
+
+                    // Upload to Cloudinary
+                    uploadToCloudinary(file, imageId);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function uploadEditFile(file) {
+                if (!file.type.match('image.*')) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imageId = 'img-' + Date.now();
+                    const preview = createImagePreview(e.target.result, imageId);
+
+                    // Add to edit preview container before the add button
+                    editImagePreviewContainer.insertBefore(preview, editAddImageBtn);
+
+                    // Upload to Cloudinary
+                    uploadToCloudinary(file, imageId, true);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function createImagePreview(imageSrc, imageId) {
+                const preview = document.createElement('div');
+                preview.className = 'image-preview';
+                preview.id = imageId;
+
+                const img = document.createElement('img');
+                img.src = imageSrc;
+                img.alt = 'Preview';
+                img.className = 'cursor-pointer';
+                img.addEventListener('click', function () {
+                    showImageModal(imageSrc);
+                });
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-image-btn';
+                removeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+                removeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    removeImagePreview(imageId);
+                });
+
+                preview.appendChild(img);
+                preview.appendChild(removeBtn);
+
+                return preview;
+            }
+
+            function removeImagePreview(imageId) {
+                const preview = document.getElementById(imageId);
+                if (preview) {
+                    preview.remove();
+
+                    // Show add button if no images left
+                    if (imagePreviewContainer.querySelectorAll('.image-preview').length === 0) {
+                        addImageBtn.style.display = 'flex';
+                    }
+                    if (editImagePreviewContainer.querySelectorAll('.image-preview').length === 0) {
+                        editAddImageBtn.style.display = 'flex';
+                    }
+
+                    // Remove from uploadedImages array if it exists there
+                    const index = uploadedImages.findIndex(img => img.previewId === imageId);
+                    if (index !== -1) {
+                        // Delete from Cloudinary
+                        deleteFromCloudinary(uploadedImages[index].public_id);
+                        uploadedImages.splice(index, 1);
+                    }
+
+                    // Also check editUploadedImages
+                    const editIndex = editUploadedImages.findIndex(img => img.previewId === imageId);
+                    if (editIndex !== -1) {
+                        // Delete from Cloudinary
+                        deleteFromCloudinary(editUploadedImages[editIndex].public_id);
+                        editUploadedImages.splice(editIndex, 1);
+                    }
+                }
+            }
+
+            function uploadToCloudinary(file, previewId, isEdit = false) {
+                const formData = new FormData();
+                formData.append('image', file);
+
+                return fetch('https://akun.vip/cloudinary/cloudinary_api.php?action=upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const imageData = {
+                                previewId: previewId,
+                                public_id: data.data.public_id,
+                                secure_url: data.data.secure_url
+                            };
+
+                            if (isEdit) {
+                                editUploadedImages.push(imageData);
+                            } else {
+                                uploadedImages.push(imageData);
+                            }
+
+                            // Hide add button if we have images
+                            if (uploadedImages.length > 0) {
+                                addImageBtn.style.display = 'none';
+                            }
+                            if (editUploadedImages.length > 0) {
+                                editAddImageBtn.style.display = 'none';
+                            }
+                        } else {
+                            console.error('Upload failed:', data.message);
+                            removeImagePreview(previewId);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error uploading image:', error);
+                        removeImagePreview(previewId);
+                    })
+                    .finally(() => {
+                        uploadInProgress = false;
+                        updateSaveButtonState();
+                    });
+            }
+
+            function deleteFromCloudinary(publicId) {
+                if (!publicId) return;
+
+                uploadInProgress = true;
+                updateSaveButtonState();
+
+                fetch('https://akun.vip/cloudinary/cloudinary_api.php?action=delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `public_id=${encodeURIComponent(publicId)}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'success') {
+                            console.error('Failed to delete image:', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting image:', error);
+                    })
+                    .finally(() => {
+                        uploadInProgress = false;
+                        updateSaveButtonState();
+                    });
+            }
+
+            // Image modal
+            const imageModal = document.getElementById('image-modal');
+            const modalImage = document.getElementById('modal-image');
+            const closeModalBtn = document.getElementById('close-modal');
+
+            function showImageModal(imageSrc) {
+                modalImage.src = imageSrc;
+                imageModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideImageModal() {
+                imageModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            closeModalBtn.addEventListener('click', hideImageModal);
+            imageModal.addEventListener('click', function (e) {
+                if (e.target === imageModal) {
+                    hideImageModal();
+                }
+            });
+
+            // Edit modal
+            const editModal = document.getElementById('edit-modal');
+            const closeEditModalBtn = document.getElementById('close-edit-modal');
+            const deleteBtn = document.getElementById('delete-btn');
+            let currentEditActivity = null;
+
+            function showEditModal(activity) {
+                currentEditActivity = activity;
+                editUploadedImages = [];
+
+                // Populate form fields
+                document.getElementById('edit-id').value = activity.id;
+
+                const activityDate = new Date(activity.waktu);
+                // Convert to GMT+7 for display
+                const offset = 7 * 60; // GMT+7 in minutes
+                activityDate.setMinutes(activityDate.getMinutes() + activityDate.getTimezoneOffset() + offset);
+
+                document.getElementById('edit-date').value = activityDate.toISOString().split('T')[0];
+                document.getElementById('edit-time').value =
+                    activityDate.getHours().toString().padStart(2, '0') + ':' +
+                    activityDate.getMinutes().toString().padStart(2, '0');
+
+                document.getElementById('edit-sistolik').value = activity.sistolik;
+                document.getElementById('edit-diastolik').value = activity.diastolik;
+                document.getElementById('edit-desc').value = activity.keterangan || '';
+
+                // Clear previous image previews
+                editImagePreviewContainer.innerHTML = '';
+
+                // Add existing images if any
+                if (activity.images && activity.images.length > 0) {
+                    activity.images.forEach(image => {
+                        const imageId = 'img-' + Date.now();
+                        const preview = createImagePreview(image.secure_url, imageId);
+                        editImagePreviewContainer.appendChild(preview);
+
+                        // Track existing images
+                        editUploadedImages.push({
+                            previewId: imageId,
+                            public_id: image.public_id,
+                            secure_url: image.secure_url,
+                            isExisting: true
+                        });
+                    });
+                }
+
+                // Add the "Add Image" button (hidden if we have images)
+                const addBtn = document.createElement('div');
+                addBtn.id = 'edit-add-image-btn';
+                addBtn.className = 'add-image-btn';
+                addBtn.innerHTML = `
+                    <i class="fas fa-plus text-gray-400 mb-2"></i>
+                    <span class="text-xs text-gray-500">Tambah Gambar</span>
+                `;
+                addBtn.addEventListener('click', function () {
+                    editFileInput.click();
+                });
+                editImagePreviewContainer.appendChild(addBtn);
+
+                // Hide add button if we have images
+                if (editUploadedImages.length > 0) {
+                    addBtn.style.display = 'none';
+                }
+
+                editModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideEditModal() {
+                editModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            closeEditModalBtn.addEventListener('click', hideEditModal);
+            editModal.addEventListener('click', function (e) {
+                if (e.target === editModal) {
+                    hideEditModal();
+                }
+            });
+
+            // Delete activity
+            deleteBtn.addEventListener('click', function () {
+                if (!currentEditActivity) return;
+
+                if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                    showLoading(true);
+
+                    // Delete all associated images first
+                    const deletePromises = [];
+
+                    if (currentEditActivity.images && currentEditActivity.images.length > 0) {
+                        currentEditActivity.images.forEach(image => {
+                            deletePromises.push(
+                                fetch('https://akun.vip/cloudinary/cloudinary_api.php?action=delete', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `public_id=${encodeURIComponent(image.public_id)}`
+                                })
+                            );
+                        });
+                    }
+
+                    // Also delete any newly uploaded but not saved images
+                    editUploadedImages.forEach(image => {
+                        if (!image.isExisting) {
+                            deletePromises.push(
+                                fetch('https://akun.vip/cloudinary/cloudinary_api.php?action=delete', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `public_id=${encodeURIComponent(image.public_id)}`
+                                })
+                            );
+                        }
+                    });
+
+                    // Wait for all image deletions to complete
+                    Promise.all(deletePromises)
+                        .then(() => {
+                            // Now delete the activity itself
+                            const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+                            const updatedActivities = activities.filter(a => a.id !== currentEditActivity.id);
+
+                            localStorage.setItem('activities', JSON.stringify(updatedActivities));
+
+                            // Update the API
+                            updateApiActivities(updatedActivities)
+                                .then(() => {
+                                    hideEditModal();
+                                    loadActivities();
+                                    showLoading(false);
+                                })
+                                .catch(error => {
+                                    console.error('Error updating API:', error);
+                                    showLoading(false);
+                                });
+                        })
+                        .catch(error => {
+                            console.error('Error deleting images:', error);
+                            showLoading(false);
+                        });
+                }
+            });
+
+            // Form submission
+            const activityForm = document.getElementById('activity-form');
+            const editForm = document.getElementById('edit-form');
+
+            activityForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const sistolik = parseInt(document.getElementById('sistolik').value);
+                const diastolik = parseInt(document.getElementById('diastolik').value);
+                const desc = document.getElementById('activity-desc').value.trim();
+                const date = document.getElementById('date').value;
+                const time = document.getElementById('time').value;
+
+                if (isNaN(sistolik) || isNaN(diastolik)) {
+                    alert('Tekanan darah harus diisi dengan angka');
+                    return;
+                }
+
+                if (sistolik < 40 || sistolik > 300) {
+                    alert('Nilai sistolik harus antara 40-300 mmHg');
+                    return;
+                }
+
+                if (diastolik < 20 || diastolik > 200) {
+                    alert('Nilai diastolik harus antara 20-200 mmHg');
+                    return;
+                }
+
+                // Combine date and time into a timestamp (GMT+7)
+                const dateTimeStr = `${date}T${time}`;
+                const dateTime = new Date(dateTimeStr);
+                // Convert to UTC by subtracting GMT+7 offset
+                dateTime.setMinutes(dateTime.getMinutes() - 420); // 7 hours = 420 minutes
+                const timestamp = dateTime.getTime();
+
+                const newActivity = {
+                    id: Date.now(),
+                    waktu: timestamp,
+                    sistolik: sistolik,
+                    diastolik: diastolik,
+                    keterangan: desc,
+                    images: uploadedImages.map(img => ({
+                        public_id: img.public_id,
+                        secure_url: img.secure_url
+                    }))
+                };
+
+                showLoading(true);
+
+                // Save to local storage
+                const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+                activities.push(newActivity);
+                localStorage.setItem('activities', JSON.stringify(activities));
+
+                // Update the API
+                updateApiActivities(activities)
+                    .then(() => {
+                        // Reset form
+                        activityForm.reset();
+                        const { currentDate, currentTime } = getCurrentDateTimeGMT7();
+                        document.getElementById('date').value = currentDate;
+                        document.getElementById('time').value = currentTime;
+
+                        // Clear image previews
+                        imagePreviewContainer.innerHTML = '';
+                        const addBtn = document.createElement('div');
+                        addBtn.id = 'add-image-btn';
+                        addBtn.className = 'add-image-btn';
+                        addBtn.innerHTML = `
+                            <i class="fas fa-plus text-gray-400 mb-2"></i>
+                            <span class="text-xs text-gray-500">Tambah Gambar</span>
+                        `;
+                        addBtn.addEventListener('click', function () {
+                            fileInput.click();
+                        });
+                        imagePreviewContainer.appendChild(addBtn);
+
+                        uploadedImages = [];
+
+                        showLoading(false);
+
+                        // Show success message
+                        alert('Data tensi darah berhasil disimpan!');
+                    })
+                    .catch(error => {
+                        console.error('Error updating API:', error);
+                        showLoading(false);
+                    });
+            });
+
+            editForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const id = parseInt(document.getElementById('edit-id').value);
+                const sistolik = parseInt(document.getElementById('edit-sistolik').value);
+                const diastolik = parseInt(document.getElementById('edit-diastolik').value);
+                const desc = document.getElementById('edit-desc').value.trim();
+                const date = document.getElementById('edit-date').value;
+                const time = document.getElementById('edit-time').value;
+
+                if (isNaN(sistolik) || isNaN(diastolik)) {
+                    alert('Tekanan darah harus diisi dengan angka');
+                    return;
+                }
+
+                if (sistolik < 40 || sistolik > 300) {
+                    alert('Nilai sistolik harus antara 40-300 mmHg');
+                    return;
+                }
+
+                if (diastolik < 20 || diastolik > 200) {
+                    alert('Nilai diastolik harus antara 20-200 mmHg');
+                    return;
+                }
+
+                showLoading(true);
+
+                // Combine date and time into a timestamp (GMT+7)
+                const dateTimeStr = `${date}T${time}`;
+                const dateTime = new Date(dateTimeStr);
+                // Convert to UTC by subtracting GMT+7 offset
+                dateTime.setMinutes(dateTime.getMinutes() - 420); // 7 hours = 420 minutes
+                const timestamp = dateTime.getTime();
+
+                // Update in local storage
+                const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+                const activityIndex = activities.findIndex(a => a.id === id);
+
+                if (activityIndex !== -1) {
+                    // Get images to keep (existing not deleted + newly uploaded)
+                    const imagesToKeep = [
+                        ...(currentEditActivity.images || []).filter(existingImg =>
+                            editUploadedImages.some(img =>
+                                img.public_id === existingImg.public_id && img.isExisting
+                            )
+                        ),
+                        ...editUploadedImages.filter(img => !img.isExisting).map(img => ({
+                            public_id: img.public_id,
+                            secure_url: img.secure_url
+                        }))
+                    ];
+
+                    activities[activityIndex] = {
+                        ...activities[activityIndex],
+                        waktu: timestamp,
+                        sistolik: sistolik,
+                        diastolik: diastolik,
+                        keterangan: desc,
+                        images: imagesToKeep
+                    };
+
+                    localStorage.setItem('activities', JSON.stringify(activities));
+
+                    // Update the API
+                    updateApiActivities(activities)
+                        .then(() => {
+                            hideEditModal();
+                            loadActivities();
+                            showLoading(false);
+                        })
+                        .catch(error => {
+                            console.error('Error updating API:', error);
+                            showLoading(false);
+                        });
+                }
+            });
+
+            // Filter activities
+            const filterSelect = document.getElementById('filter-select');
+            const dateRangeFilter = document.getElementById('date-range-filter');
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const applyDateRangeBtn = document.getElementById('apply-date-range-btn');
+            const resetFilterBtn = document.getElementById('reset-filter-btn');
+            const filterDateRange = document.getElementById('filter-date-range');
+
+            // Set default date range (last 30 days)
+            const defaultEndDate = new Date();
+            const defaultStartDate = new Date();
+            defaultStartDate.setDate(defaultStartDate.getDate() - 30);
+
+            startDateInput.value = defaultStartDate.toISOString().split('T')[0];
+            endDateInput.value = defaultEndDate.toISOString().split('T')[0];
+
+            filterSelect.addEventListener('change', function () {
+                if (this.value === 'custom') {
+                    dateRangeFilter.classList.remove('hidden');
+                } else {
+                    dateRangeFilter.classList.add('hidden');
+                    loadActivities();
+                }
+            });
+
+            applyDateRangeBtn.addEventListener('click', function () {
+                loadActivities();
+            });
+
+            resetFilterBtn.addEventListener('click', function () {
+                filterSelect.value = 'all';
+                dateRangeFilter.classList.add('hidden');
+                loadActivities();
+            });
+
+            // Determine blood pressure status
+            function getBPStatus(sistolik, diastolik) {
+                if (sistolik < 120 && diastolik < 80) {
+                    return { status: 'Normal', class: 'bp-normal', keterangan: 'Normal' };
+                } else if (sistolik >= 120 && sistolik <= 129 && diastolik < 80) {
+                    return { status: 'Pra-hipertensi', class: 'bp-prehypertension', keterangan: 'Waspada' };
+                } else if ((sistolik >= 130 && sistolik <= 139) || (diastolik >= 80 && diastolik <= 89)) {
+                    return { status: 'Hipertensi 1', class: 'bp-hypertension1', keterangan: 'Ringan' };
+                } else if ((sistolik >= 140 && sistolik <= 159) || (diastolik >= 90 && diastolik <= 99)) {
+                    return { status: 'Hipertensi 2', class: 'bp-hypertension2', keterangan: 'Sedang' };
+                } else if (sistolik >= 160 || diastolik >= 100) {
+                    return { status: 'Hipertensi 3', class: 'bp-hypertension3', keterangan: 'Berat' };
+                } else if (sistolik > 180 || diastolik > 120) {
+                    return { status: 'Krisis', class: 'bp-crisis', keterangan: 'Darurat' };
+                } else {
+                    return { status: 'Unknown', class: '', keterangan: '' };
+                }
+            }
+
+            // Format date for display (GMT+7)
+            function formatDateGMT7(timestamp) {
+                const date = new Date(timestamp);
+                // Convert to GMT+7
+                date.setMinutes(date.getMinutes() + date.getTimezoneOffset() + 420);
+
+                const optionsDate = {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                };
+                const optionsTime = {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+
+                const formattedDate = date.toLocaleDateString('id-ID', optionsDate);
+                const formattedTime = date.toLocaleTimeString('id-ID', optionsTime);
+
+                return {
+                    date: formattedDate,
+                    time: formattedTime,
+                    fullDateTime: `${formattedDate} • ${formattedTime}`
+                };
+            }
+
+            // Calculate statistics
+            function calculateStatistics(activities, filterValue) {
+                if (activities.length === 0) {
+                    return {
+                        avgBp: '-/-',
+                        minBp: '-/-',
+                        maxBp: '-/-',
+                        statusCount: '-',
+                        totalRecords: '0'
+                    };
+                }
+
+                const sistolikValues = activities.map(a => a.sistolik);
+                const diastolikValues = activities.map(a => a.diastolik);
+
+                const avgSistolik = Math.round(sistolikValues.reduce((a, b) => a + b, 0) / sistolikValues.length);
+                const avgDiastolik = Math.round(diastolikValues.reduce((a, b) => a + b, 0) / diastolikValues.length);
+                const minSistolik = Math.min(...sistolikValues);
+                const minDiastolik = Math.min(...diastolikValues);
+                const maxSistolik = Math.max(...sistolikValues);
+                const maxDiastolik = Math.max(...diastolikValues);
+
+                // Count status occurrences
+                const statusCounts = {};
+                activities.forEach(activity => {
+                    const status = getBPStatus(activity.sistolik, activity.diastolik).status;
+                    statusCounts[status] = (statusCounts[status] || 0) + 1;
+                });
+
+                // Find most common status
+                let mostCommonStatus = '-';
+                let maxCount = 0;
+                for (const [status, count] of Object.entries(statusCounts)) {
+                    if (count > maxCount) {
+                        mostCommonStatus = status;
+                        maxCount = count;
+                    }
+                }
+
+                // Format date range text
+                let dateRangeText = '';
+                if (filterValue === 'today') {
+                    const today = new Date();
+                    today.setMinutes(today.getMinutes() + today.getTimezoneOffset() + 420);
+                    dateRangeText = today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                } else if (filterValue === 'week') {
+                    const startOfWeek = new Date();
+                    startOfWeek.setMinutes(startOfWeek.getMinutes() + startOfWeek.getTimezoneOffset() + 420);
+                    startOfWeek.setHours(0, 0, 0, 0);
+                    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+                    dateRangeText = `${startOfWeek.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${endOfWeek.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                } else if (filterValue === 'month') {
+                    const today = new Date();
+                    today.setMinutes(today.getMinutes() + today.getTimezoneOffset() + 420);
+                    dateRangeText = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                } else if (filterValue === 'custom') {
+                    const startDate = new Date(startDateInput.value);
+                    startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset() + 420);
+
+                    const endDate = new Date(endDateInput.value);
+                    endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset() + 420);
+
+                    dateRangeText = `${startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${endDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                } else {
+                    // All time
+                    const dates = activities.map(a => new Date(a.waktu));
+                    const minDate = new Date(Math.min(...dates));
+                    minDate.setMinutes(minDate.getMinutes() + minDate.getTimezoneOffset() + 420);
+
+                    const maxDate = new Date(Math.max(...dates));
+                    maxDate.setMinutes(maxDate.getMinutes() + maxDate.getTimezoneOffset() + 420);
+
+                    dateRangeText = `${minDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} - ${maxDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                }
+
+                return {
+                    avgBp: `${avgSistolik.toFixed(0)}/${avgDiastolik.toFixed(0)}`,
+                    minBp: `${minSistolik}/${minDiastolik}`,
+                    maxBp: `${maxSistolik}/${maxDiastolik}`,
+                    statusCount: mostCommonStatus,
+                    totalRecords: activities.length.toString(),
+                    dateRangeText: dateRangeText
+                };
+            }
+
+            // Load activities from API
+            function loadActivities() {
+                const loadingElement = document.getElementById('loading-history');
+                const activitiesContainer = document.getElementById('activities-container');
+                const noActivitiesElement = document.getElementById('no-activities');
+                const statsContainer = document.getElementById('stats-container');
+
+                loadingElement.classList.remove('hidden');
+                activitiesContainer.innerHTML = '';
+                noActivitiesElement.classList.add('hidden');
+                statsContainer.classList.add('hidden');
+
+                fetch('https://akun.vip/info/api.php?id=tensi')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.data) {
+                            try {
+                                const activities = JSON.parse(data.data);
+
+                                // Also check local storage for any activities not yet synced
+                                const localActivities = JSON.parse(localStorage.getItem('activities') || '[]');
+
+                                // Merge activities, giving priority to local storage
+                                const mergedActivities = [...activities];
+
+                                localActivities.forEach(localActivity => {
+                                    const existingIndex = mergedActivities.findIndex(a => a.id === localActivity.id);
+                                    if (existingIndex !== -1) {
+                                        mergedActivities[existingIndex] = localActivity;
+                                    } else {
+                                        mergedActivities.push(localActivity);
+                                    }
+                                });
+
+                                // Apply filter
+                                const filterValue = filterSelect.value;
+                                const now = new Date();
+                                let filteredActivities = [...mergedActivities];
+
+                                if (filterValue === 'today') {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    filteredActivities = mergedActivities.filter(activity => {
+                                        const activityDate = new Date(activity.waktu);
+                                        return activityDate >= today;
+                                    });
+                                } else if (filterValue === 'week') {
+                                    const startOfWeek = new Date();
+                                    startOfWeek.setHours(0, 0, 0, 0);
+                                    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+                                    const endOfWeek = new Date(startOfWeek);
+                                    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+                                    filteredActivities = mergedActivities.filter(activity => {
+                                        const activityDate = new Date(activity.waktu);
+                                        return activityDate >= startOfWeek && activityDate < endOfWeek;
+                                    });
+                                } else if (filterValue === 'month') {
+                                    const startOfMonth = new Date();
+                                    startOfMonth.setHours(0, 0, 0, 0);
+                                    startOfMonth.setDate(1);
+
+                                    const endOfMonth = new Date(startOfMonth);
+                                    endOfMonth.setMonth(startOfMonth.getMonth() + 1);
+
+                                    filteredActivities = mergedActivities.filter(activity => {
+                                        const activityDate = new Date(activity.waktu);
+                                        return activityDate >= startOfMonth && activityDate < endOfMonth;
+                                    });
+                                } else if (filterValue === 'custom') {
+                                    const startDate = new Date(startDateInput.value);
+                                    const endDate = new Date(endDateInput.value);
+                                    endDate.setHours(23, 59, 59, 999); // Include entire end day
+
+                                    filteredActivities = mergedActivities.filter(activity => {
+                                        const activityDate = new Date(activity.waktu);
+                                        return activityDate >= startDate && activityDate <= endDate;
+                                    });
+                                }
+
+                                // Sort by date (newest first)
+                                filteredActivities.sort((a, b) => b.waktu - a.waktu);
+
+                                // Display activities
+                                if (filteredActivities.length > 0) {
+                                    // Show and update statistics
+                                    statsContainer.classList.remove('hidden');
+                                    const stats = calculateStatistics(filteredActivities, filterValue);
+                                    document.getElementById('avg-bp').textContent = stats.avgBp;
+                                    document.getElementById('min-bp').textContent = stats.minBp;
+                                    document.getElementById('max-bp').textContent = stats.maxBp;
+                                    document.getElementById('status-count').textContent = stats.statusCount;
+                                    document.getElementById('total-records').textContent = stats.totalRecords;
+                                    filterDateRange.textContent = stats.dateRangeText;
+
+                                    filteredActivities.forEach(activity => {
+                                        const activityElement = createActivityElement(activity);
+                                        activitiesContainer.appendChild(activityElement);
+                                    });
+                                } else {
+                                    noActivitiesElement.classList.remove('hidden');
+                                }
+                            } catch (e) {
+                                console.error('Error parsing activities:', e);
+                                noActivitiesElement.classList.remove('hidden');
+                            }
+                        } else {
+                            noActivitiesElement.classList.remove('hidden');
+                        }
+
+                        loadingElement.classList.add('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error loading activities:', error);
+                        loadingElement.classList.add('hidden');
+                        noActivitiesElement.classList.remove('hidden');
+                    });
+            }
+
+            function createActivityElement(activity) {
+                const { date, time, fullDateTime } = formatDateGMT7(activity.waktu);
+                const bpStatus = getBPStatus(activity.sistolik, activity.diastolik);
+
+                const row = document.createElement('tr');
+                row.className = 'activity-card';
+
+                // Prepare image view
+                let imageView = '-';
+                if (activity.images && activity.images.length > 0) {
+                    imageView = `<span class="view-image-btn" onclick="showImageModal('${activity.images[0].secure_url}')">Lihat Gambar</span>`;
+                    if (activity.images.length > 1) {
+                        imageView += ` (${activity.images.length})`;
+                    }
+                }
+
+                row.innerHTML = `
+                    <td>
+                        <div class="font-medium">${date}</div>
+                        <div class="text-sm text-gray-500">${time}</div>
+                    </td>
+                    <td class="font-medium">${activity.sistolik}/${activity.diastolik}</td>
+                    <td>
+                        <span class="bp-status ${bpStatus.class}" title="${bpStatus.keterangan}">${bpStatus.status}</span>
+                    </td>
+                    <td>${activity.keterangan || '-'}</td>
+                    <td>${imageView}</td>
+                    <td>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn btn-icon text-blue-500 hover:text-blue-700" data-id="${activity.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn btn-icon text-red-500 hover:text-red-700" data-id="${activity.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                // Add event listeners to buttons
+                row.querySelector('.edit-btn').addEventListener('click', function () {
+                    showEditModal(activity);
+                });
+
+                row.querySelector('.delete-btn').addEventListener('click', function () {
+                    if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                        showLoading(true);
+
+                        // Delete all associated images first
+                        const deletePromises = [];
+
+                        if (activity.images && activity.images.length > 0) {
+                            activity.images.forEach(image => {
+                                deletePromises.push(
+                                    fetch('https://akun.vip/cloudinary/cloudinary_api.php?action=delete', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                        },
+                                        body: `public_id=${encodeURIComponent(image.public_id)}`
+                                    })
+                                );
+                            });
+                        }
+
+                        // Wait for all image deletions to complete
+                        Promise.all(deletePromises)
+                            .then(() => {
+                                // Now delete the activity itself
+                                const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+                                const updatedActivities = activities.filter(a => a.id !== activity.id);
+
+                                localStorage.setItem('activities', JSON.stringify(updatedActivities));
+
+                                // Update the API
+                                updateApiActivities(updatedActivities)
+                                    .then(() => {
+                                        loadActivities();
+                                        showLoading(false);
+                                    })
+                                    .catch(error => {
+                                        console.error('Error updating API:', error);
+                                        showLoading(false);
+                                    });
+                            })
+                            .catch(error => {
+                                console.error('Error deleting images:', error);
+                                showLoading(false);
+                            });
+                    }
+                });
+
+                return row;
+            }
+
+            function updateApiActivities(activities) {
+                const encodedData = btoa(JSON.stringify(activities));
+                return fetch(`https://akun.vip/info/api.php?id=tensi&data=${encodedData}`, {
+                    method: 'GET'
+                });
+            }
+
+            function showLoading(show) {
+                const loadingElement = document.createElement('div');
+                loadingElement.id = 'global-loading';
+                loadingElement.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                loadingElement.innerHTML = '<div class="loading-spinner"></div>';
+
+                if (show) {
+                    document.body.appendChild(loadingElement);
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    const existingLoading = document.getElementById('global-loading');
+                    if (existingLoading) {
+                        existingLoading.remove();
+                        document.body.style.overflow = '';
+                    }
+                }
+            }
+
+            // Make showImageModal available globally for inline onclick handlers
+            window.showImageModal = function (imageSrc) {
+                modalImage.src = imageSrc;
+                imageModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            };
+
+            // Initialize
+            updateSaveButtonState();
+        });
+    </script>
+</body>
+
+</html>
