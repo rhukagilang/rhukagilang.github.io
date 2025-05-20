@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portofolio</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        iframe {
+            width: 100%;
+            height: 90%;
+            border: none;
+        }
+
+        .navigation {
+            height: 10%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #2b80c9;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .nav-button.active {
+            background-color: #184d5f;
+            cursor: not-allowed;
+        }
+
+        .nav-button:hover:not(.active) {
+            background-color: #0e7272;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Iframe untuk menampilkan konten -->
+    <iframe id="iframeContent"
+        src="https://suivision.xyz/account/0x04f3189a4958d6b4367d13273095d94c53d73d12f5468558dbe35e37b1503452"></iframe>
+
+    <!-- Navigasi di bawah -->
+    <div class="navigation">
+        <button id="btnA" class="nav-button active" onclick="loadFrame('A')">Wallet 1</button>
+        <button id="btnB" class="nav-button" onclick="loadFrame('B')">Wallet 2</button>
+        <button id="btnC" class="nav-button" onclick="loadFrame('C')">Wallet 3</button>
+    </div>
+
+    <script>
+        function loadFrame(frameId) {
+            // URL untuk masing-masing frame
+            const urls = {
+                'A': 'https://suivision.xyz/account/0x04f3189a4958d6b4367d13273095d94c53d73d12f5468558dbe35e37b1503452',
+                'B': 'https://suivision.xyz/account/0xaebaf07141fe9b86f64b9232a4ca6403a5671bda0797a73e1d8cad0af185635c',
+                'C': 'https://suivision.xyz/account/0x9f9cea45f0a5d49d4c7cd1c2d3219ecb380e657c6bac24a5eabe03d177e75b0f'
+            };
+
+            // Ubah iframe ke URL yang dipilih
+            document.getElementById('iframeContent').src = urls[frameId];
+
+            // Atur tombol yang dipilih sebagai aktif
+            setActiveButton('btn' + frameId);
+        }
+
+        function setActiveButton(activeButtonId) {
+            // Nonaktifkan semua tombol
+            document.getElementById('btnA').classList.remove('active');
+            document.getElementById('btnB').classList.remove('active');
+            document.getElementById('btnC').classList.remove('active');
+            document.getElementById('btnA').disabled = false;
+            document.getElementById('btnB').disabled = false;
+            document.getElementById('btnC').disabled = false;
+
+            // Aktifkan tombol yang dipilih
+            document.getElementById(activeButtonId).classList.add('active');
+            document.getElementById(activeButtonId).disabled = true;
+        }
+    </script>
+
+</body>
+
+</html>
