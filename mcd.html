@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Pendaftaran McDonald's</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #db0007;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        button {
+            background-color: #ffbc0d;
+            color: #292929;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #ffa500;
+        }
+
+        button.primary {
+            background-color: #db0007;
+            color: white;
+        }
+
+        button.primary:hover {
+            background-color: #b80000;
+        }
+
+        #response {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Pendaftaran McDonald's</h1>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="fullName">Nama Lengkap:</label>
+                <div class="input-group">
+                    <input type="text" id="fullName" name="fullName" required>
+                    <button type="button" id="generateName">Generate</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="deviceId">Device ID:</label>
+                <div class="input-group">
+                    <input type="text" id="deviceId" name="deviceId" required>
+                    <button type="button" id="generateDeviceId">Generate</button>
+                </div>
+            </div>
+            <button type="submit" class="primary">Proses Pendaftaran</button>
+        </form>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        document.getElementById('generateDeviceId').addEventListener('click', function () {
+            // Membuat device ID acak format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+            function generateRandomHex(length) {
+                let result = '';
+                const characters = '0123456789ABCDEF';
+                for (let i = 0; i < length; i++) {
+                    result += characters.charAt(Math.floor(Math.random() * characters.length));
+                }
+                return result;
+            }
+
+            const deviceId = `${generateRandomHex(8)}-${generateRandomHex(4)}-${generateRandomHex(4)}-${generateRandomHex(4)}-${generateRandomHex(12)}`;
+            document.getElementById('deviceId').value = deviceId;
+
+            // Generate nama acak 2 kata
+            generateRandomName();
+        });
+
+        function generateRandomName() {
+            const namaDepan = [
+                "Agus", "Budi", "Citra", "Dewi", "Eko", "Fitri", "Gita", "Hadi",
+                "Indah", "Joko", "Kartini", "Lina", "Maya", "Nanda", "Putri", "Rudi",
+                "Siti", "Tono", "Umi", "Vina", "Wahyu", "Yuli", "Zaki", "Anita",
+                "Bambang", "Dian", "Erni", "Fajar", "Hendra", "Irma", "Kusuma", "Lestari"
+            ];
+
+            const namaBelakang = [
+                "Wijaya", "Susanto", "Hartono", "Suryadi", "Santoso", "Kusuma", "Wati", "Hidayat",
+                "Nugraha", "Pratama", "Purnama", "Saputra", "Setiawan", "Sari", "Utami", "Permadi",
+                "Handayani", "Gunawan", "Mulya", "Dewi", "Putra", "Agustina", "Haryanto", "Mustika",
+                "Wulandari", "Irawan", "Sulistyo", "Rahmawati", "Fitriani", "Yuliana", "Nugroho", "Sanjaya"
+            ];
+
+            const randomNamaDepan = namaDepan[Math.floor(Math.random() * namaDepan.length)];
+            const randomNamaBelakang = namaBelakang[Math.floor(Math.random() * namaBelakang.length)];
+
+            document.getElementById('fullName').value = `${randomNamaDepan} ${randomNamaBelakang}`;
+        }
+
+        // Tombol untuk generate nama saja
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('generateName').addEventListener('click', generateRandomName);
+        });
+
+        document.getElementById('registrationForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const fullName = document.getElementById('fullName').value;
+            const deviceId = document.getElementById('deviceId').value;
+
+            const requestData = {
+                email: email,
+                device_id: deviceId,
+                full_name: fullName
+            };
+
+            fetch('https://api-promoscanstruk.mcdonalds.co.id/register', {
+                method: 'POST',
+                headers: {
+                    'Host': 'api-promoscanstruk.mcdonalds.co.id',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json, text/plain, */*',
+                    'Authorization': 'Bearer',
+                    'Sec-Fetch-Site': 'same-site',
+                    'Accept-Language': 'id-ID,id;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Origin': 'https://promoscanstruk.mcdonalds.co.id',
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+                    'Referer': 'https://promoscanstruk.mcdonalds.co.id/',
+                    'Sec-Fetch-Dest': 'empty'
+                },
+                body: JSON.stringify(requestData)
+            })
+                .then(response => {
+                    // Menampilkan semua header
+                    const headers = {};
+                    response.headers.forEach((value, name) => {
+                        headers[name] = value;
+                    });
+
+                    return response.text().then(text => {
+                        return {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: headers,
+                            body: text
+                        };
+                    });
+                })
+                .then(data => {
+                    const responseElement = document.getElementById('response');
+                    let responseText = `Status: ${data.status} ${data.statusText}\n\n`;
+
+                    // Menampilkan headers
+                    responseText += 'Headers:\n';
+                    Object.entries(data.headers).forEach(([key, value]) => {
+                        responseText += `${key}: ${value}\n`;
+                    });
+
+                    // Menampilkan body
+                    responseText += '\nBody:\n';
+                    try {
+                        // Mencoba parse sebagai JSON untuk format yang lebih baik
+                        const jsonBody = JSON.parse(data.body);
+                        responseText += JSON.stringify(jsonBody, null, 2);
+                    } catch {
+                        responseText += data.body;
+                    }
+
+                    responseElement.textContent = responseText;
+                    responseElement.style.display = 'block';
+                })
+                .catch(error => {
+                    const responseElement = document.getElementById('response');
+                    responseElement.textContent = `Error: ${error.message}`;
+                    responseElement.style.display = 'block';
+                });
+        });
+    </script>
+</body>
+
+</html>
